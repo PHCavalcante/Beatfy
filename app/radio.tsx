@@ -1,4 +1,4 @@
-import { SafeAreaView, View, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import { SafeAreaView, View, StyleSheet, TouchableOpacity } from "react-native";
 import { useState, useEffect, useRef } from "react";
 import { useThemeColors } from "@/hooks/useThemeColor";
 import { Audio } from "expo-av";
@@ -12,6 +12,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
+import LottieView from "lottie-react-native";
 
 export default function Radio() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -76,52 +77,57 @@ export default function Radio() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <Animated.View style={isPlaying ? [styles.radioImage, animatedStyle] : styles.radioImage}>
-        <Ionicons
-          name="radio-outline"
-          size={70}
-          color={colors.text}
-                  />
+      <Animated.View
+        style={
+          isPlaying ? [styles.radioImage, animatedStyle] : styles.radioImage
+        }
+      >
+        <Ionicons name="radio-outline" size={70} color={colors.text} />
       </Animated.View>
       <View style={styles.controlsButtons}>
-        <TouchableOpacity
-          onPress={isPlaying ? stopAudio : playAudio}
-          style={styles.playButton}
-        >
-          <ActivityIndicator
-            size={"large"}
-            color={"#000000"}
-            animating={isLoading}
-            hidesWhenStopped={true}
-            style={styles.activityIndicator}
+        {!isLoading ? (
+          <TouchableOpacity onPress={isPlaying ? stopAudio : playAudio}>
+            <Ionicons
+              name={isPlaying ? "pause-circle" : "play-circle"}
+              size={80}
+              color={colors.text}
+            />
+          </TouchableOpacity>
+        ) : (
+          <LottieView
+            source={require("@/assets/animations/loading-to-radio.json")}
+            autoPlay
+            loop={true}
+            style={{ width: 80, height: 80 }}
+            colorFilters={[
+              { keypath: "Shape Layer 1.Ellipse 1.Fill 1", color: colors.text },
+              { keypath: "Shape Layer 2.Ellipse 1.Fill 1", color: colors.text },
+              { keypath: "Shape Layer 3.Ellipse 1.Fill 1", color: colors.text },
+              { keypath: "Shape Layer 4.Ellipse 1.Fill 1", color: colors.text },
+              { keypath: "Shape Layer 5.Ellipse 1.Fill 1", color: colors.text },
+            ]}
           />
-          <Ionicons
-            name={isPlaying ? "pause-circle" : "play-circle"}
-            size={80}
-            color={colors.text}
-            style={
-              isLoading
-                ? styles.playButtonImageAllWhite
-                : styles.playButtonImage
-            }
+        )}
+        <View style={styles.sliderView}>
+          <Ionicons name="volume-low-outline" size={24} color={colors.text} />
+          <Slider
+            style={styles.slider}
+            minimumValue={0}
+            maximumValue={1}
+            thumbTintColor={colors.primary}
+            minimumTrackTintColor={colors.primary}
+            maximumTrackTintColor={colors.primary}
+            value={volume.current}
+            step={0.01}
+            onValueChange={(value) => {
+              volume.current = value;
+              if (sound) {
+                sound.setVolumeAsync(value);
+              }
+            }}
           />
-        </TouchableOpacity>
-        <Slider
-          style={styles.slider}
-          minimumValue={0}
-          maximumValue={1}
-          thumbTintColor={colors.primary}
-          minimumTrackTintColor={colors.primary}
-          maximumTrackTintColor={colors.primary}
-          value={volume.current}
-          step={0.01}
-          onValueChange={(value) => {
-            volume.current = value;
-            if (sound) {
-              sound.setVolumeAsync(value);
-            }
-          }}
-        />
+          <Ionicons name="volume-high-outline" size={24} color={colors.text} />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -136,36 +142,22 @@ const styles = StyleSheet.create({
     marginTop: 50,
   },
   controlsButtons: {
-    display: "flex",
-    flexDirection: "column",
+    flex: 1,
     alignContent: "center",
     alignItems: "center",
-    margin: "auto"
+    alignSelf: "center",
+    justifyContent: "center",
+  },
+  sliderView: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "80%",
+    marginTop: 20,
   },
   slider: {
-    width: 250,
+    width: 230,
     height: 40,
     transform: [{ scaleY: 1.3 }, { scaleX: 1.1 }],
   },
-  playButton: {
-    position: "relative",
-  },
-  activityIndicator: {
-    position: "absolute",
-    zIndex: 10,
-    inset: 0,
-    margin: "auto",
-    width: 80,
-    height: 80,
-    transform: [{ scale: 1.5}],
-  },
-  playButtonImage: {
-    width: 80,
-    height: 80,
-  },
-  playButtonImageAllWhite: {
-    filter: "brightness(1000%)",
-    width: 80,
-    height: 80,
-  }
 });
