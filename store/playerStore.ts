@@ -26,6 +26,10 @@ type PlayerState = {
   seekTo: (milliseconds: number) => Promise<void>;
   setVolume: (value: number) => Promise<void>;
   playSelectedTrack: (trackId: string, trackName: string, artist: string, trackImage: string) => Promise<void>;
+  isShuffleEnabled: boolean;
+  repeatMode: "off" | "one" | "all";
+  toggleShuffle: () => void;
+  setRepeatMode: (mode: "off" | "one" | "all") => void;
 };
 
 let soundRef: Sound | null = null;
@@ -37,6 +41,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentIndex: -1,
   duration: 0,
   position: 0,
+  isShuffleEnabled: false,
+  repeatMode: "off",
 
   playTrack: async (track, newPlaylist) => {
     const db = await useDatabase();
@@ -56,8 +62,17 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
           duration: status.durationMillis || 0,
           position: status.positionMillis || 0,
         });
+        if (status.didJustFinish) {
+      const { repeatMode, currentTrack, playlist, playTrack, toggleNextSong } = get();
+
+      if (repeatMode === "one") {
+        playTrack(currentTrack!, playlist);
+      } else {
+        toggleNextSong();
+        }
       }
-    });
+    }
+   });
 
     soundRef = sound;
     set({ currentTrack: track, isPlaying: true, playlist: newPlaylist });
@@ -98,15 +113,28 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   toggleNextSong: async () => {
-    const { playlist, currentIndex, playTrack } = get();
-    // console.log("Playlist", playlist);
-    // console.log("Current Index", currentIndex);
-    // console.log("Tamanho da Playlist", playlist.length);
-    // console.log("Próxima Música", playlist[currentIndex + 1]);
-    // console.log("PlayTrack", playTrack);
-    if (playlist.length === 0 || currentIndex >= playlist.length - 1) return;
-    // console.log("Tocando próxima música:", playlist[currentIndex + 1]);
-    await playTrack(playlist[currentIndex + 1], playlist);
+    const { playlist, currentIndex, playTrack, isShuffleEnabled, repeatMode } =
+      get();
+
+    if (playlist.length === 0) return;
+
+    let nextIndex = currentIndex + 1;
+
+    if (isShuffleEnabled) {
+      const remaining = playlist.filter((_, i) => i !== currentIndex);
+      const random = remaining[Math.floor(Math.random() * remaining.length)];
+      return await playTrack(random, playlist);
+    }
+
+    if (nextIndex >= playlist.length) {
+      if (repeatMode === "all") {
+        nextIndex = 0;
+      } else {
+        return;
+      }
+    }
+
+    await playTrack(playlist[nextIndex], playlist);
   },
 
   seekTo: async (milliseconds) => {
@@ -151,12 +179,20 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         };
         await playTrack(track);
       }
-    } catch (error:any) {
-      if (error.response?.status === 302){
+    } catch (error: any) {
+      if (error.response?.status === 302) {
         await playTrack(error.response.headers.location);
         return;
       }
-        console.error("Error fetching track stream:", error);
+      console.log("Error fetching track stream:", error);
     }
+  },
+
+  toggleShuffle: () => {
+    set((state) => ({ isShuffleEnabled: !state.isShuffleEnabled }));
+  },
+
+  setRepeatMode: (mode) => {
+    set({ repeatMode: mode });
   },
 }));
