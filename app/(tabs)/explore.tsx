@@ -5,10 +5,12 @@ import GetTrendingSongs from "@/utils/GetTrendings";
 import { usePlaySelectedTrack } from "@/store/playerSelectors";
 import { useThemeColors } from "@/hooks/useThemeColor";
 import axios from "axios";
+import LoadingAnimationContainer from "@/components/LoadingAnimationContainer";
 
 export default function Explore() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const playSelectedTrack = usePlaySelectedTrack();
   const colors = useThemeColors();
 
@@ -117,25 +119,25 @@ export default function Explore() {
       >
         <View>
           <Text style={[styles.sectionTitle, {color: colors.text}]}>Populares no momento</Text>
-          <GetTrendingSongs type={"trending"} colors={colors} />
+          <GetTrendingSongs type={"trending"} colors={colors} setMusicLoading={setIsLoading} />
         </View>
         <View>
           <Text style={[styles.sectionTitle, {color: colors.text}]}>Populares este mês</Text>
-          <GetTrendingSongs type={"monthly"} colors={colors} />
+          <GetTrendingSongs type={"monthly"} colors={colors} setMusicLoading={setIsLoading} />
         </View>
         <View>
           <Text style={[styles.sectionTitle, {color: colors.text}]}>As mais populares</Text>
-          <GetTrendingSongs type={"allTime"} colors={colors} />
+          <GetTrendingSongs type={"allTime"} colors={colors} setMusicLoading={setIsLoading} />
         </View>
         <View>
           <Text style={[styles.sectionTitle, {color: colors.text}]}>Playlists populares</Text>
-          <GetTrendingSongs type={"playlists"} colors={colors} />
+          <GetTrendingSongs type={"playlists"} colors={colors} setMusicLoading={setIsLoading} />
         </View>
       </ScrollView>
+       {isLoading && <LoadingAnimationContainer />}
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,

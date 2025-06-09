@@ -1,4 +1,4 @@
-import { usePlaySelectedTrack } from "@/store/playerSelectors";
+import { usePlaySelectedTrack, useCurrentTrack } from "@/store/playerSelectors";
 import { Image, Text, FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
@@ -6,23 +6,27 @@ import SkeletonLoader from "@/components/SkeletonLoader";
 
 type TrendingSongsProps = {
   type: "trending" | "monthly" | "yearly" | "allTime" | "playlists" | "artists";
+  setMusicLoading: (musicIsLoading: boolean) => void;
   colors: any;
 }
 
-export default function GetTrendingSongs({ type, colors }: TrendingSongsProps) {
+ const urlMap: Record<string, string> = {
+   trending: "https://discoveryprovider.audius.co/v1/tracks/trending",
+   monthly: "https://discoveryprovider.audius.co/v1/tracks/trending?time=month",
+   yearly: "https://discoveryprovider.audius.co/v1/tracks/trending?time=year",
+   allTime: "https://discoveryprovider.audius.co/v1/tracks/trending?time=allTime",
+   playlists: "https://discoveryprovider.audius.co/v1/playlists/trending",
+   artists: "https://discoveryprovider.audius.co/v1/users/search?sort_method?popular",
+ };
+
+export default function GetTrendingSongs({ type, colors, setMusicLoading }: TrendingSongsProps) {
   const [requestedResource, setRequestedResource] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const playSelectedTrack = usePlaySelectedTrack();
-  
-  const urlMap: Record<string, string> = {
-    trending: "https://discoveryprovider.audius.co/v1/tracks/trending",
-    monthly: "https://discoveryprovider.audius.co/v1/tracks/trending?time=month",
-    yearly: "https://discoveryprovider.audius.co/v1/tracks/trending?time=year",
-    allTime: "https://discoveryprovider.audius.co/v1/tracks/trending?time=allTime",
-    playlists: "https://discoveryprovider.audius.co/v1/playlists/trending",
-  };
+  const currentTrack = useCurrentTrack();
 
   const handlePress = useCallback((item:any) => {
+     setMusicLoading(true);
      playSelectedTrack(
        item.id,
        item.title,
@@ -30,6 +34,12 @@ export default function GetTrendingSongs({ type, colors }: TrendingSongsProps) {
        item.artwork["480x480"]
      );
   }, [requestedResource])
+
+  useEffect(() => {
+    if (currentTrack) {
+      setMusicLoading(false);
+    }
+  }, [currentTrack, setMusicLoading]);
 
   useEffect(() => {
     async function fetchTrending() {
@@ -67,6 +77,7 @@ export default function GetTrendingSongs({ type, colors }: TrendingSongsProps) {
       </View>
     );
   }
+  console.log("requestedResource", requestedResource);
   return (
     <FlatList
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -76,20 +87,19 @@ export default function GetTrendingSongs({ type, colors }: TrendingSongsProps) {
       keyExtractor={(item) => item.id.toString()}
       renderItem={({ item }) => (
         <TouchableOpacity
-          key={item.id}
           style={styles.item}
           onPress={() => handlePress(item)}
         >
           <Image
-            source={{ uri: item.artwork["150x150"] }} // possíveis valores aqui são 150x150, 480x480 e 1000x1000, mas ao testar valores maiores que 150x150 o app fica lento. Quanto maior a resolução, mais bonita a imagem fica
+            source={{ uri: type !== "artists" ? item.artwork["150x150"] : item.profile_picture["480x480"] }} // possíveis valores aqui são 150x150, 480x480 e 1000x1000, mas ao testar valores maiores que 150x150 o app fica lento. Quanto maior a resolução, mais bonita a imagem fica
             style={styles.image}
           />
           <Text style={[styles.title, { color: colors.text }]}>
-            {type !== "playlists" ? item.title : item.playlist_name}
+            {type === "playlists" ? item.playlist_name : type === "artists" ? item.name : item.title}
           </Text>
-          <Text style={[styles.artist, { color: colors.textSecondary }]}>
+          {type !== "artists" && <Text style={[styles.artist, { color: colors.textSecondary }]}>
             {type !== "playlists" ? item.user.name : ""}
-          </Text>
+          </Text>}
         </TouchableOpacity>
       )}
     />
