@@ -1,23 +1,17 @@
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
   Image,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   BackHandler,
   Platform,
 } from "react-native";
-import { useState, useEffect, useCallback } from "react";
+import Slider from "@react-native-community/slider";
 import { Ionicons } from "@expo/vector-icons";
-import defaultSongIcon from "@/assets/icons/default-song.png";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withRepeat,
-  Easing,
-} from "react-native-reanimated";
+import { useRouter, usePathname } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   useCurrentTrack,
   useIsPlaying,
@@ -29,15 +23,9 @@ import {
   useSeekTo,
   useSetVolume,
 } from "@/store/playerSelectors";
-import { useRouter } from "expo-router";
-import { memo } from "react";
-import { usePathname } from "expo-router";
+import { usePlayerStore } from "@/store/playerStore";
 import { useThemeColors } from "@/hooks/useThemeColor";
-import Slider from "@react-native-community/slider";
 import { useDatabase } from "@/database/useDatabase";
-import { useFocusEffect } from "@react-navigation/native";
-
-const { width: screenWidth } = Dimensions.get("window");
 
 const formatMilliseconds = (milliseconds: number) => {
   const minutes = Math.floor(milliseconds / 60000);
@@ -45,12 +33,264 @@ const formatMilliseconds = (milliseconds: number) => {
   return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 };
 
-const MiniPlayer = memo(function MiniPlayer() {
-  const translateX = useSharedValue(0);
-  const [textWidth, setTextWidth] = useState(0);
+type CollapsedMiniPlayerProps = {
+  currentTrack: {
+    name: string;
+    artist?: string;
+    image?: string;
+  };
+  isPlaying: boolean;
+  togglePlayPause: () => void;
+  handleToggle: () => void;
+  colors: {
+    surface: string;
+    text: string;
+    textSecondary: string;
+  };
+};
+
+const CollapsedMiniPlayer = React.memo(
+  ({ currentTrack, isPlaying, togglePlayPause, handleToggle, colors }: CollapsedMiniPlayerProps) => {
+    const imageSource = useMemo(
+      () =>
+        currentTrack.image
+          ? { uri: currentTrack.image }
+          : require("@/assets/icons/default-song.png"),
+      [currentTrack.image]
+    );
+
+    return (
+      <TouchableOpacity
+        style={[styles.container, { backgroundColor: colors.surface }]}
+        onPress={handleToggle}
+      >
+        <View style={styles.miniImageWrapper}>
+          <Image source={imageSource} style={styles.miniImage} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text
+            style={[styles.title, { color: colors.text }]}
+            numberOfLines={1}
+          >
+            {currentTrack.name}
+          </Text>
+          <Text
+            style={[styles.artist, { color: colors.textSecondary }]}
+            numberOfLines={1}
+          >
+            {currentTrack.artist ?? "Artista desconhecido"}
+          </Text>
+        </View>
+        <TouchableOpacity onPress={togglePlayPause}>
+          <Ionicons
+            name={isPlaying ? "pause" : "play"}
+            size={30}
+            color={colors.text}
+          />
+        </TouchableOpacity>
+      </TouchableOpacity>
+    );
+  }
+);
+
+type ExpandedPlayerProps = {
+  currentTrack: {
+    name: string;
+    artist?: string;
+    image?: string;
+    id?: string;
+  };
+  isPlaying: boolean;
+  position: number;
+  duration: number;
+  volume: number;
+  colors: {
+    background: string;
+    text: string;
+    textSecondary: string;
+    primary: string;
+  };
+  isFavorite: boolean;
+  togglePlayPause: () => void;
+  togglePreviousSong: () => void;
+  toggleNextSong: () => void;
+  handleSeek: (value: number) => void;
+  handleVolumeChange: (value: number) => void;
+  toggleFavorite: () => void;
+  toggleShuffle: () => void;
+  isShuffleEnabled: boolean;
+  repeatMode: "off" | "one" | "all";
+  nextRepeatMode: () => void;
+  router: ReturnType<typeof useRouter>;
+  handleToggle: () => void;
+};
+
+const ExpandedPlayer = React.memo(
+  ({
+    currentTrack,
+    isPlaying,
+    position,
+    duration,
+    volume,
+    colors,
+    isFavorite,
+    togglePlayPause,
+    togglePreviousSong,
+    toggleNextSong,
+    handleSeek,
+    handleVolumeChange,
+    toggleFavorite,
+    toggleShuffle,
+    isShuffleEnabled,
+    repeatMode,
+    nextRepeatMode,
+    router,
+    handleToggle,
+  }: ExpandedPlayerProps) => {
+    const formattedPosition = useMemo(
+      () => formatMilliseconds(position),
+      [position]
+    );
+    const formattedDuration = useMemo(
+      () => formatMilliseconds(duration),
+      [duration]
+    );
+    const imageSource = useMemo(
+      () =>
+        currentTrack?.image
+          ? { uri: currentTrack.image }
+          : require("@/assets/icons/default-song.png"),
+      [currentTrack?.image]
+    );
+
+    return (
+      <View
+        style={[styles.playerContainer, { backgroundColor: colors.background }]}
+      >
+        <View style={styles.imageContainer}>
+          <Image source={imageSource} style={styles.albumImage} />
+        </View>
+        {Platform.OS === "ios" && (
+          <TouchableOpacity
+            onPress={handleToggle}
+            style={styles.iosCloseButton}
+          >
+            <Ionicons name="chevron-down" size={30} color={colors.text} />
+          </TouchableOpacity>
+        )}
+        <View
+          style={[styles.sliderContainer, { marginTop: 38, marginBottom: 48 }]}
+        >
+          <Text style={[styles.text, { color: colors.text }]}>
+            {formattedPosition}
+          </Text>
+          <Slider
+            style={styles.slider}
+            minimumValue={0}
+            maximumValue={duration}
+            value={position}
+            onSlidingComplete={handleSeek}
+            thumbTintColor={colors.primary}
+            minimumTrackTintColor={colors.primary}
+            maximumTrackTintColor={colors.primary}
+          />
+          <Text style={[styles.text, { color: colors.text }]}>
+            {formattedDuration}
+          </Text>
+        </View>
+
+        <Text style={[styles.text, styles.trackTitle, { color: colors.text }]}>
+          {currentTrack?.name ?? "Desconhecida"}
+        </Text>
+        <Text
+          style={[styles.text, { fontSize: 16, color: colors.textSecondary }]}
+        >
+          {currentTrack?.artist ?? "Desconhecido"}
+        </Text>
+
+        <View style={styles.addToandFavoriteView}>
+          <TouchableOpacity onPress={() => router.push("/choosePlaylist")}>
+            <Ionicons name="list-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={toggleFavorite}>
+            <Ionicons
+              name={isFavorite ? "heart" : "heart-outline"}
+              size={24}
+              color={colors.text}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.controlsContainer}>
+          <TouchableOpacity onPress={nextRepeatMode}>
+            <Ionicons
+              name={repeatMode === "all" ? "infinite" : "repeat"}
+              size={24}
+              color={colors.text}
+              style={{ opacity: repeatMode === "off" ? 0.5 : 1 }}
+            />
+          </TouchableOpacity>
+          <View style={styles.controls}>
+            <TouchableOpacity onPress={togglePreviousSong}>
+              <Ionicons name="play-skip-back" size={24} color={colors.text} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={togglePlayPause}>
+              <Ionicons
+                name={isPlaying ? "pause-circle" : "play-circle"}
+                size={70}
+                color={colors.text}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={toggleNextSong}>
+              <Ionicons
+                name="play-skip-forward"
+                size={24}
+                color={colors.text}
+              />
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity onPress={toggleShuffle}>
+            <Ionicons
+              name="shuffle"
+              size={24}
+              color={colors.text}
+              style={{ opacity: isShuffleEnabled ? 1 : 0.5 }}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.sliderContainer}>
+          <Ionicons name="volume-low-outline" size={24} color={colors.text} />
+          <Slider
+            style={styles.slider}
+            minimumValue={0}
+            maximumValue={1}
+            value={volume}
+            onValueChange={handleVolumeChange}
+            thumbTintColor={colors.primary}
+            minimumTrackTintColor={colors.primary}
+            maximumTrackTintColor={colors.primary}
+          />
+          <Ionicons name="volume-high-outline" size={24} color={colors.text} />
+        </View>
+
+        <TouchableOpacity
+          onPress={() => router.push("/lyric")}
+          style={[styles.touchableOpacity, { backgroundColor: colors.primary }]}
+        >
+          
+          <Text style={{ color: colors.text }}>VER LETRA</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+);
+
+const MiniPlayer = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [volume, setVolumeState] = useState(0.7);
+
   const currentTrack = useCurrentTrack();
   const isPlaying = useIsPlaying();
   const togglePlayPause = useTogglePlayPause();
@@ -60,287 +300,113 @@ const MiniPlayer = memo(function MiniPlayer() {
   const position = usePosition();
   const duration = useDuration();
   const setVolume = useSetVolume();
+  const { toggleShuffle, repeatMode, setRepeatMode, isShuffleEnabled } =
+    usePlayerStore();
   const colors = useThemeColors();
   const database = useDatabase();
   const router = useRouter();
   const pathname = usePathname();
 
-  const handleToggle = () => setIsExpanded((prev) => !prev);
+  const handleToggle = useCallback(() => setIsExpanded((prev) => !prev), []);
+  const handleSeek = useCallback((value: number) => seekTo(value), [seekTo]);
+  const handleVolumeChange = useCallback((value: number) => {
+    setVolumeState(value);
+    setVolume(value);
+  }, []);
 
-  useEffect(() => {
-    if (textWidth > screenWidth) {
-      const totalDistance = textWidth + screenWidth;
-
-      translateX.value = withRepeat(
-        withTiming(-textWidth, {
-          duration: (totalDistance / 50) * 1000,
-          easing: Easing.linear,
-        }),
-        -1,
-        false
-      );
+  const toggleFavorite = useCallback(async () => {
+    if (!currentTrack?.id) return;
+    const db = await database;
+    if (isFavorite) {
+      await db.removeFavoriteMusic(currentTrack.id);
+      setIsFavorite(false);
+    } else {
+      await db.addFavoriteMusic(currentTrack.id);
+      setIsFavorite(true);
     }
-  }, [textWidth]);
+  }, [isFavorite, currentTrack?.id]);
+
+  const nextRepeatMode = () => {
+    const modes = ["off", "one", "all"] as const;
+    const nextIndex = (modes.indexOf(repeatMode) + 1) % modes.length;
+    setRepeatMode(modes[nextIndex]);
+  };
+
   useEffect(() => {
+    if (!isExpanded) return;
     const onBackPress = () => {
-      if (isExpanded) {
-        setIsExpanded(false);
-        return true;
-      }
-      return false;
+      setIsExpanded(false);
+      return true;
     };
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
       onBackPress
     );
-
     return () => backHandler.remove();
   }, [isExpanded]);
-  
 
-useFocusEffect(
-  useCallback(() => {
-    const checkIfFavorite = async () => {
-      if (!currentTrack?.id) return;
-      const db = await database;
-      const isFav = await db.isFavoriteMusic(currentTrack.id);
-      setIsFavorite(isFav);
-    };
-
-    checkIfFavorite();
-  }, [database,currentTrack?.id])
-);
-
-
-
-  const handleSeek = useCallback(
-    async (value: number) => {
-      await seekTo(value);
-    },
-    [seekTo]
+  useFocusEffect(
+    useCallback(() => {
+      let mounted = true;
+      const checkFavorite = async () => {
+        if (!currentTrack?.id) return;
+        const db = await database;
+        const isFav = await db.isFavoriteMusic(currentTrack.id);
+        if (mounted) setIsFavorite(isFav);
+      };
+      checkFavorite();
+      return () => {
+        mounted = false;
+      };
+    }, [currentTrack?.id])
   );
-  // const handleVolumeChange = (value: number) => {
-  //   setVolumeState(value);
-  //   setVolume(value);
-  // };
-  const handleVolumeChange = useCallback((value: number) => {
-    setVolumeState(value);
-    setVolume(value);
-  }, []);
-  const removeFavoriteMusic = async (musicId: string) => {
-    const db = await database;
-    await db.removeFavoriteMusic(musicId);
-  };
-  const addFavoriteMusic = async (musicId: string) => {
-    const db = await database;
-    await db.addFavoriteMusic(musicId);
-  }
 
-const handleToggleFavorite = async () => {
-  if (!currentTrack?.id) return;
+  if (
+    !currentTrack ||
+    ["/player", "/lyric", "/choosePlaylist"].includes(pathname)
+  )
+    return null;
 
-  try {
-    if (isFavorite) {
-      await removeFavoriteMusic(currentTrack.id);
-      setIsFavorite(false);
-    } else {
-      await addFavoriteMusic(currentTrack.id);
-      setIsFavorite(true); 
-    }
-  } catch (err) {
-    console.error("Erro ao alternar favorito:", err);
-  }
+  return isExpanded ? (
+    <ExpandedPlayer
+      currentTrack={{
+        ...currentTrack,
+        name: currentTrack?.name ?? "Desconhecida",
+      }}
+      isPlaying={isPlaying}
+      position={position}
+      duration={duration}
+      volume={volume}
+      colors={colors}
+      isFavorite={isFavorite}
+      togglePlayPause={togglePlayPause}
+      togglePreviousSong={togglePreviousSong}
+      toggleNextSong={toggleNextSong}
+      handleSeek={handleSeek}
+      handleVolumeChange={handleVolumeChange}
+      toggleFavorite={toggleFavorite}
+      toggleShuffle={toggleShuffle}
+      isShuffleEnabled={isShuffleEnabled}
+      repeatMode={repeatMode}
+      nextRepeatMode={nextRepeatMode}
+      router={router}
+      handleToggle={handleToggle}
+    />
+  ) : (
+    <CollapsedMiniPlayer
+      currentTrack={{
+        ...currentTrack,
+        name: currentTrack?.name ?? "Desconhecida",
+      }}
+      isPlaying={isPlaying}
+      togglePlayPause={togglePlayPause}
+      handleToggle={handleToggle}
+      colors={colors}
+    />
+  );
 };
 
-
-  if (!currentTrack || pathname === "/player" || pathname === "/lyric" || pathname === "/choosePlaylist") return null;
-  if (!isExpanded) {
-    return (
-      <TouchableOpacity
-        style={[styles.container, { backgroundColor: colors.surface }]}
-        onPress={handleToggle}
-      >
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            backgroundColor: "#c1c1c1",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: 5,
-            marginRight: 10,
-            marginLeft: 5,
-          }}
-        >
-          <Image
-            source={
-              currentTrack.image ? { uri: currentTrack.image } : defaultSongIcon
-            }
-            style={{
-              width: currentTrack.image ? "100%" : 25,
-              height: currentTrack.image ? "100%" : 25,
-              borderRadius: 5,
-            }}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text
-            style={[styles.title, { color: colors.text }]}
-            onLayout={(e) => setTextWidth(e.nativeEvent.layout.width)}
-          >
-            {currentTrack.name}
-          </Text>
-          <Text style={[styles.artist, { color: colors.textSecondary }]}>
-            {currentTrack.artist ?? "Artista desconhecido"}
-          </Text>
-        </View>
-        <View style={styles.buttons}>
-          <TouchableOpacity onPress={togglePlayPause}>
-            <Ionicons
-              name={isPlaying ? "pause" : "play"}
-              size={30}
-              color={colors.text}
-            />
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    );
-  }
-  return (
-    <View
-      style={[styles.playerContainer, { backgroundColor: colors.background }]}
-    >
-      <View style={styles.imageContainer}>
-        <Image
-          source={
-            currentTrack?.image ? { uri: currentTrack.image } : defaultSongIcon
-          }
-          style={{
-            width: currentTrack?.image ? "100%" : 150,
-            height: currentTrack?.image ? "100%" : 150,
-            borderRadius: currentTrack?.image ? 5 : 0,
-          }}
-        />
-      </View>
-      {Platform.OS === "ios" && (
-        <TouchableOpacity
-          onPress={handleToggle}
-          style={{ position: "absolute", top: 30, right: 10 }}
-        >
-          <Ionicons name="chevron-down" size={30} color={colors.text} />
-        </TouchableOpacity>
-      )}
-      <View
-        style={[
-          styles.sliderContainer,
-          { gap: 5, marginTop: 38, marginBottom: 48 },
-        ]}
-      >
-        <Text style={[styles.text, { color: colors.text }]}>
-          {formatMilliseconds(position)}
-        </Text>
-        <Slider
-          style={styles.slider}
-          minimumValue={0}
-          maximumValue={duration}
-          thumbTintColor={colors.primary}
-          minimumTrackTintColor={colors.primary}
-          maximumTrackTintColor={colors.primary}
-          value={position}
-          step={1}
-          onSlidingComplete={handleSeek}
-        />
-        <Text style={[styles.text, { color: colors.text }]}>
-          {formatMilliseconds(duration)}
-        </Text>
-      </View>
-      <View style={styles.textDataMusic}>
-        <Text
-          style={[
-            styles.text,
-            {
-              fontSize: 20,
-              fontWeight: "bold",
-              marginBottom: 20,
-              color: colors.text,
-            },
-          ]}
-        >
-          {currentTrack?.name ?? "Desconhecida"}
-        </Text>
-        <Text
-          style={[styles.text, { fontSize: 16, color: colors.textSecondary }]}
-        >
-          {currentTrack?.artist ?? "Desconhecido"}
-        </Text>
-      </View>
-      <View style={styles.addToandFavoriteView}>
-        <TouchableOpacity onPress={() => router.push("/choosePlaylist")}>
-          <Ionicons
-            name="list-outline"
-            size={24}
-            color={colors.text}
-            style={{ marginTop: 20, marginBottom: 20 }}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleToggleFavorite}>
-          <Ionicons
-            name={isFavorite ? "heart" : "heart-outline"}
-            size={24}
-            color={colors.text}
-            style={{ marginTop: 20, marginBottom: 20 }}
-          />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.controlsContainer}>
-        <TouchableOpacity>
-          <Ionicons name="repeat" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <View style={styles.controls}>
-          <TouchableOpacity onPress={togglePreviousSong}>
-            <Ionicons name="play-skip-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={togglePlayPause}>
-            <Ionicons
-              name={isPlaying ? "pause-circle" : "play-circle"}
-              size={70}
-              color={colors.text}
-              style={{ marginHorizontal: 20 }}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={toggleNextSong}>
-            <Ionicons name="play-skip-forward" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity>
-          <Ionicons name="shuffle" size={24} color={colors.text} />
-        </TouchableOpacity>
-      </View>
-      <View style={[styles.sliderContainer, { gap: 15 }]}>
-        <Ionicons name="volume-low-outline" size={24} color={colors.text} />
-        <Slider
-          style={styles.slider}
-          minimumValue={0}
-          maximumValue={1}
-          value={volume}
-          onValueChange={handleVolumeChange}
-          thumbTintColor={colors.primary}
-          maximumTrackTintColor={colors.primary}
-          minimumTrackTintColor={colors.primary}
-        />
-        <Ionicons name="volume-high-outline" size={24} color={colors.text} />
-      </View>
-      <TouchableOpacity
-        onPress={() => router.push("/lyric")}
-        style={[styles.touchableOpacity, { backgroundColor: colors.primary }]}
-      >
-        <Text style={{ color: colors.text }}>VER A LETRA</Text>
-      </TouchableOpacity>
-    </View>
-  );
-});
 const styles = StyleSheet.create({
-  // MiniPlayer styles
   container: {
     padding: 5,
     flexDirection: "row",
@@ -349,23 +415,24 @@ const styles = StyleSheet.create({
     bottom: 60,
     width: "100%",
     zIndex: 10,
-    overflow: "hidden",
   },
-  title: {
-    fontWeight: "bold",
-    textOverflow: "nowrap",
-  },
-  artist: { color: "#ccc", fontSize: 12 },
-  buttons: {
-    flexDirection: "row",
+  miniImageWrapper: {
+    width: 40,
+    height: 40,
+    backgroundColor: "#c1c1c1",
     alignItems: "center",
-    gap: 10,
+    justifyContent: "center",
+    borderRadius: 5,
+    marginRight: 10,
+    marginLeft: 5,
   },
-  // Player styles
-  text: {
-    color: "#FFF",
-    textAlign: "center",
+  miniImage: {
+    width: 25,
+    height: 25,
+    borderRadius: 5,
   },
+  title: { fontWeight: "bold" },
+  artist: { fontSize: 12 },
   playerContainer: {
     flex: 1,
     alignItems: "center",
@@ -380,17 +447,20 @@ const styles = StyleSheet.create({
     height: 200,
     backgroundColor: "#c1c1c1",
     borderRadius: 35,
-    boxShadow: "0px 4px 4px #171C27",
     marginTop: 40,
   },
-  sliderContainer: {
+  albumImage: { width: 150, height: 150, borderRadius: 10 },
+  iosCloseButton: { position: "absolute", top: 30, right: 10 },
+  sliderContainer: { flexDirection: "row", alignItems: "center", gap: 10 },
+  slider: { width: 240 },
+  text: { textAlign: "center" },
+  trackTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 10 },
+  addToandFavoriteView: {
     flexDirection: "row",
-  },
-  slider: {
-    width: 242,
-  },
-  textDataMusic: {
-    gap: 20,
+    justifyContent: "space-between",
+    width: "100%",
+    paddingHorizontal: 40,
+    marginVertical: 20,
   },
   controlsContainer: {
     flexDirection: "row",
@@ -398,25 +468,13 @@ const styles = StyleSheet.create({
     gap: 40,
     marginBottom: 40,
   },
-  controls: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
+  controls: { flexDirection: "row", alignItems: "center", gap: 10 },
   touchableOpacity: {
-    backgroundColor: "#5C83D2",
-    boxShadow: "0px 4px 4px #171C27",
     paddingHorizontal: 23,
     paddingVertical: 10,
     borderRadius: 35,
-    marginTop: 51,
-    marginBottom: 34,
-  },
-  addToandFavoriteView: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    paddingHorizontal: 40,
+    marginTop: 30,
+    marginBottom: 20,
   },
 });
 
