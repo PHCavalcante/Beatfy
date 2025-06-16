@@ -65,7 +65,7 @@ const CollapsedMiniPlayer = React.memo(
         onPress={handleToggle}
       >
         <View style={styles.miniImageWrapper}>
-          <Image source={imageSource} style={styles.miniImage} />
+          <Image source={imageSource} style={[styles.miniImage, {width: currentTrack.image ? 40 : 25, height: currentTrack.image ? 40 : 25}]} />
         </View>
         <View style={{ flex: 1 }}>
           <Text
@@ -168,7 +168,7 @@ const ExpandedPlayer = React.memo(
         style={[styles.playerContainer, { backgroundColor: colors.background }]}
       >
         <View style={styles.imageContainer}>
-          <Image source={imageSource} style={styles.albumImage} />
+          <Image source={imageSource} style={[styles.albumImage, {width: currentTrack.image ? 200 : 150, height: currentTrack.image ? 200 : 150}]} />
         </View>
         {Platform.OS === "ios" && (
           <TouchableOpacity
