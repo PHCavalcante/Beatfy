@@ -58,7 +58,7 @@ export default function GetTrendingSongs({ type, colors, setMusicLoading }: Tren
           setRequestedResource([]);
         }
       } catch (error) {
-        console.error("Erro ao buscar dados do tipo:", type, error);
+        console.log("Erro ao buscar dados do tipo:", type, error);
         setRequestedResource([]);
       } finally {
         setLoading(false);
@@ -77,7 +77,6 @@ export default function GetTrendingSongs({ type, colors, setMusicLoading }: Tren
       </View>
     );
   }
-  console.log("requestedResource", requestedResource);
   return (
     <FlatList
       style={[styles.container, { backgroundColor: colors.background }]}

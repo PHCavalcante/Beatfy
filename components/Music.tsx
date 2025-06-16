@@ -4,7 +4,6 @@ import { usePlayTrack } from "@/store/playerSelectors";
 import { Track } from "@/store/playerStore";
 import { useThemeColors } from "@/hooks/useThemeColor";
 
-
 type Props = {
     id?: string;
     name?: string;
@@ -24,7 +23,9 @@ export default function Music({ name, url, artist, mode = "horizontal", path, id
         return <VerticalMusicIcon name={name} artist={artist} url={url} />
     } else if (mode == "grid") {
         return <GridMusicIcon name={name} artist={artist} url={url} path={path} id={id} colors={colors} onPress={onPress}/>
-    } 
+    } else {
+        return <LocalMusicIcon infoItem={{ id: id ?? "", uri: path ?? "", name: name ?? "Unknown", artist }} playlist={[]} colors={colors} />
+    }
 }
 function HorizontalMusicIcon({ name, url }: { name?: string; url: ImageSourcePropType }) {
     return (
@@ -48,7 +49,7 @@ function VerticalMusicIcon({ name, url, artist }: { name?: string; url: ImageSou
 
     );
 }
-function GridMusicIcon({ name, url, artist, path, id, colors, onPress }: Props) {
+function GridMusicIcon({ name, url, artist, path, id, onPress }: Props) {
     const color = useThemeColors();
     const playTrack = usePlayTrack();
 
