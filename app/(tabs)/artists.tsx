@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
-import { View, StyleSheet, SafeAreaView } from "react-native";
+import { View, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useThemeColors } from "@/hooks/useThemeColor";
 
 export default function Artists() {
@@ -16,8 +17,7 @@ export default function Artists() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    paddingTop: 20
+    alignItems: "center"
   },
   content: {
     flex: 1,

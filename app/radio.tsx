@@ -1,4 +1,5 @@
-import { SafeAreaView, View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useEffect, useRef } from "react";
 import { useThemeColors } from "@/hooks/useThemeColor";
 import { Audio } from "expo-av";

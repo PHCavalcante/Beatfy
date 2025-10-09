@@ -1,4 +1,5 @@
-import { View, StyleSheet, Text, SafeAreaView, TextInput, ScrollView, TouchableOpacity, Image, FlatList} from "react-native";
+import { View, StyleSheet, Text, TextInput, ScrollView, TouchableOpacity, Image, FlatList} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import GetTrendingSongs from "@/utils/GetTrendings";
@@ -141,8 +142,7 @@ export default function Explore() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        alignItems: "center",
-        paddingTop: "10%",
+        alignItems: "center"
     },
     sectionTitle: {
         fontSize: 20,

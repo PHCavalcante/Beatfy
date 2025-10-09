@@ -10,7 +10,7 @@ export default function HomeSection({ title, route, colors } : { title: string, 
           {title}
         </Text>
         <TouchableOpacity onPress={() => router.push(route)}>
-          <AntDesign name="arrowright" size={25} color={colors.text} />
+          <AntDesign name="arrow-right" size={22} color={colors.text} />
         </TouchableOpacity>
       </View>
     );

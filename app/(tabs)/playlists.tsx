@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { View, StyleSheet, SafeAreaView, Text, ScrollView, TouchableOpacity, Modal, TextInput } from "react-native";
+import { View, StyleSheet, Text, ScrollView, TouchableOpacity,TextInput } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/Header";
 import Music from "@/components/Music";
 import { useFocusEffect } from "expo-router";
@@ -218,8 +219,7 @@ export default function PlayLists() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    paddingTop: 20,
+    alignItems: "center"
   },
   content: {
     flex: 1,

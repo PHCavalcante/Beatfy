@@ -5,7 +5,8 @@ import { useMusics } from "@/Context/musicContext";
 import { AntDesign } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { View, Text, StyleSheet, SafeAreaView, TextInput, FlatList } from "react-native";
+import { View, Text, StyleSheet, TextInput, FlatList } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SearchMusicLocal() {
     const colors = useThemeColors();
@@ -16,14 +17,13 @@ export default function SearchMusicLocal() {
     const filteredMusics = musics?.assets.filter((music) =>
         music.filename.toLowerCase().includes(search.toLowerCase())
     );
-    console.log("Filtered Musics length: ", filteredMusics?.length);
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: colors.background }]}
       >
         <AntDesign
-          name="arrowleft"
-          size={29}
+          name="arrow-left"
+          size={22}
           color={colors.text}
           style={{ position: "absolute", left: 10, top: 40 }}
           onPress={() => router.push("../")}
@@ -81,8 +81,7 @@ export default function SearchMusicLocal() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        alignItems: "center",
-        paddingTop: 20,
+        alignItems: "center"
     },
     content: {
         flexDirection: "row",

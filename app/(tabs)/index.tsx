@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { View, StyleSheet, SafeAreaView, FlatList } from "react-native";
+import { View, StyleSheet, FlatList } from "react-native";
 import { useMusics } from "@/Context/musicContext";
 import { useThemeColors } from "@/hooks/useThemeColor";
 import * as MediaLibrary from "expo-media-library";
@@ -7,7 +7,8 @@ import Header from "@/components/Header";
 import { initializeDatabase } from "@/database/initializeDatabase";
 import { useDatabase, type MusicInfo } from "@/database/useDatabase";
 import { LocalMusicIcon } from "@/components/Music";
-import { Track } from "@/store/playerStore";;
+import { Track } from "@/store/playerStore";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
   const { musics, setMusics } = useMusics();
@@ -89,8 +90,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
-    backgroundColor: "#2F2A2A",
-    paddingTop: "5%",    
+    backgroundColor: "#2F2A2A"
   },
   recentsTitleText: {
     color: "#fff",

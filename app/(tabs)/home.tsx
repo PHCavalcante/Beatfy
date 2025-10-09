@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native'
-import AntDesign from '@expo/vector-icons/AntDesign';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Music from '../../components/Music'
 import { useRouter, RelativePathString } from 'expo-router';
 import Header from '@/components/Header';
@@ -166,7 +166,7 @@ export default function Home() {
           )
           }
 
-          <View style={styles.favorite}>
+          {favorite?.length! > 0 && <View style={styles.favorite}>
             <HomeSection title="Favoritas" route={"/list/favorites" as RelativePathString} colors={colors} />
             <ScrollView horizontal contentContainerStyle={styles.listMusicCarrosel} showsHorizontalScrollIndicator={false}>
               {favorite?.slice(0, 4).map((value, index) => (
@@ -190,7 +190,7 @@ export default function Home() {
               ))}
 
             </ScrollView>
-          </View>
+          </View>}
           {playlists.length > 0 && <View>
             <HomeSection title="PlayLists" route={"/playlists" as RelativePathString} colors={colors} />
             <View style={styles.albuns}>
@@ -218,7 +218,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
-    paddingTop: 20,
   },
   scroll: {
     width: "100%",
