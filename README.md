@@ -22,6 +22,14 @@
 
 Beatfy é um player de música moderno e intuitivo, desenvolvido com React Native e Expo, que oferece uma experiência musical completa. O aplicativo combina reprodução de músicas locais com recursos avançados de descoberta musical online, rádio digital e gerenciamento personalizado de playlists.
 
+## Screenshots
+
+<div style="display: flex; gap: 100px">
+    <img src="./screenshots//explore-screen.jpeg" alt="explore screen" style="width: 300px; display: block">
+    <img src="./screenshots//lyrics-screen.jpeg" alt="explore screen" style="width: 300px; display: block">
+    <img src="./screenshots//player-screen.jpeg" alt="explore screen" style="width: 300px; display: block">
+</div>
+
 ### ✨ Destaques
 
 - 🎯 **Interface Intuitiva**: Design moderno e responsivo inspirado nos melhores players do mercado
