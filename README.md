@@ -24,7 +24,7 @@ Beatfy é um player de música moderno e intuitivo, desenvolvido com React Nativ
 
 ## Screenshots
 
-<div style="display: flex; gap: 100px">
+<div style="display: flex; gap: 50px">
     <img src="./screenshots//explore-screen.jpeg" alt="explore screen" style="width: 300px; display: block">
     <img src="./screenshots//lyrics-screen.jpeg" alt="explore screen" style="width: 300px; display: block">
     <img src="./screenshots//player-screen.jpeg" alt="explore screen" style="width: 300px; display: block">
