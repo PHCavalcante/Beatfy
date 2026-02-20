@@ -74,9 +74,9 @@ function GridMusicIcon({ name, url, artist, path, id, onPress }: Props) {
     };
 
     return (
-        <TouchableOpacity onPress={handlePress} style={styles.songGrid}>
+        <TouchableOpacity onPress={handlePress} style={styles.songGrid} activeOpacity={0.8}>
             <View style={{ flex: 1, alignItems: "center" }}>
-                <View style={styles.fotoGridContainer}>
+                <View style={[styles.fotoGridContainer, { backgroundColor: color.surface || "#2A2A2D" }]}>
                     <Image source={url} style={styles.styleFotoGrid} />
                 </View>
                 <Text style={[styles.songTitleGrid, { color: color.text }]} numberOfLines={3}>
@@ -130,11 +130,11 @@ const styles = StyleSheet.create({
     fotoGridContainer: {
         alignItems: "center",
         justifyContent: "center",
-        width: 147,
-        height: 122,
-        backgroundColor: "#C1C1C1",
-        borderRadius: 15,
+        width: 140,
+        height: 140,
+        borderRadius: 12,
         marginBottom: 10,
+        overflow: "hidden",
     },
     styleFotoGrid: {
         height: 90,
@@ -167,7 +167,8 @@ const styles = StyleSheet.create({
         color: "#A19E9E",
     },
     songGrid: {
-        width: 147,
+        width: 140,
+        marginHorizontal: 4,
     },
     songTitleGrid: {
         fontSize: 20,

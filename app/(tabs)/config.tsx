@@ -20,63 +20,41 @@ export default function Config() {
         <Text style={[styles.title, {color: colors.text}]}>Configurações</Text>
       </View>
       <View style={styles.buttons}>
-        <TouchableOpacity style={styles.button} onPress={() => router.push("/configPages/personalization")}>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: colors.surface }]}
+          onPress={() => router.push("/configPages/personalization")}
+          activeOpacity={0.8}
+        >
           <Ionicons
             name="brush"
             color={colors.text}
             size={30}
             />
-          <Text style={[styles.text, {color: colors.text}]}>PERSONALIZAÇÃO</Text>
+          <Text style={[styles.text, { color: colors.text }]}>PERSONALIZAÇÃO</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button}>
-          <Ionicons
-            name="musical-note"
-            color={colors.text}
-            size={30}
-            />
-          <Text style={[styles.text, {color: colors.text}]}>
-            EQUALIZADOR
-          </Text>
+        <TouchableOpacity style={[styles.button, { backgroundColor: colors.surface }]} activeOpacity={0.8}>
+          <Ionicons name="musical-note" color={colors.text} size={24} />
+          <Text style={[styles.text, { color: colors.text }]}>EQUALIZADOR</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button}>
-          <Ionicons
-            name="musical-notes"
-            color={colors.text}
-            size={30}
-            /> 
-          <Text style={[styles.text, {color: colors.text}]}>
-            ÁUDIO
-          </Text>
+        <TouchableOpacity style={[styles.button, { backgroundColor: colors.surface }]} activeOpacity={0.8}>
+          <Ionicons name="musical-notes" color={colors.text} size={24} />
+          <Text style={[styles.text, { color: colors.text }]}>ÁUDIO</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button}>
-          <Ionicons
-            name="options"
-            color={colors.text}
-            size={30}
-            />
-          <Text style={[styles.text, {color: colors.text}]}>
-            OUTROS
-          </Text>
+        <TouchableOpacity style={[styles.button, { backgroundColor: colors.surface }]} activeOpacity={0.8}>
+          <Ionicons name="options" color={colors.text} size={24} />
+          <Text style={[styles.text, { color: colors.text }]}>OUTROS</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button}>
-          <Ionicons
-            name="cloud-upload"
-            color={colors.text}
-            size={30}
-            />
-          <Text style={[styles.text, {color: colors.text}]}>
-            BACKUP & RESTAURAÇÃO
-          </Text>
+        <TouchableOpacity style={[styles.button, { backgroundColor: colors.surface }]} activeOpacity={0.8}>
+          <Ionicons name="cloud-upload" color={colors.text} size={24} />
+          <Text style={[styles.text, { color: colors.text }]}>BACKUP & RESTAURAÇÃO</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={() => router.push("/configPages/about")}>
-          <Ionicons
-            name="information-circle"
-            color={colors.text}
-            size={30}
-            />
-          <Text style={[styles.text, {color: colors.text}]}>
-            SOBRE
-          </Text>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: colors.surface }]}
+          onPress={() => router.push("/configPages/about")}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="information-circle" color={colors.text} size={24} />
+          <Text style={[styles.text, { color: colors.text }]}>SOBRE</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -85,33 +63,35 @@ export default function Config() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center"
+    alignItems: "center",
   },
   header: {
     width: "100%",
     paddingTop: "5%",
     flexDirection: "row",
-    textAlign: "center",
     alignItems: "center",
-    paddingHorizontal: 25,
-    gap: 30
+    paddingHorizontal: 24,
+    gap: 16,
+    marginBottom: 24,
   },
   title: {
     fontSize: 24,
+    fontWeight: "700",
   },
   text: {
-    fontSize: 20
+    fontSize: 16,
+    fontWeight: "500",
   },
   buttons: {
-    width: "100%",
+    width: "90%",
     flex: 1,
-    justifyContent: "center",
-    gap: 30
+    gap: 12,
   },
   button: {
     flexDirection: "row",
-    gap: 9,
+    gap: 16,
     alignItems: "center",
-    padding: 10,
-  }
+    padding: 16,
+    borderRadius: 12,
+  },
 });

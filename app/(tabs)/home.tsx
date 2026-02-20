@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Music from '../../components/Music'
-import { useRouter, RelativePathString } from 'expo-router';
-import Header from '@/components/Header';
-import { useDatabase, type MusicInfo } from '@/database/useDatabase';
-import ModalPlaylistDetails from '@/components/ModalPlaylistDetails';
+import { useState, useEffect } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Music from "@/components/Music";
+import { useRouter, RelativePathString } from "expo-router";
+import Header from "@/components/Header";
+import { useDatabase, type MusicInfo } from "@/database/useDatabase";
+import ModalPlaylistDetails from "@/components/ModalPlaylistDetails";
 import HomeSection from "@/components/HomeSection";
 import { useThemeColors } from "@/hooks/useThemeColor";
+import { useToast } from "@/context/ToastContext";
 import { Ionicons } from "@expo/vector-icons";
 import { usePlayTrack } from "@/store/playerSelectors";
+import { borderRadius, spacing } from "@/theme";
 
 export default function Home() {
   const [recentPlays, setRecentPlays] = useState<MusicInfo[] | null>([]);
@@ -23,6 +25,7 @@ export default function Home() {
   const colors = useThemeColors();
   const router = useRouter();
   const database = useDatabase();
+  const { showToast } = useToast();
 
   const playTrack = usePlayTrack();
 
@@ -33,7 +36,7 @@ export default function Home() {
       const songs = (await database).queryRandomAllMusics();
       setSuggestion(await songs);
     } catch (error) {
-      console.log("Erro ao consultar dados aleatórios da tabela all_musics: ", error);
+      showToast("Erro ao carregar recomendações.", "error");
     }
   };
   const recentSongs = async () => {
@@ -44,7 +47,7 @@ export default function Home() {
       }
       setRecentPlays(await songs);
     } catch (error) {
-      console.log("Erro ao transicionar dados no banco de dados: ", error);
+      showToast("Erro ao carregar músicas recentes.", "error");
     }
   };
   const favoriteSongs = async () => {
@@ -57,7 +60,7 @@ export default function Home() {
       const allPlaylists = await db.queryAllPlaylists();
       setPlaylists(allPlaylists);
     } catch (error) {
-      console.error("Erro ao buscar playlists:", error);
+      showToast("Erro ao carregar playlists.", "error");
     }
   };
   const togglePlaylist = async (playlistId: number) => {
@@ -73,7 +76,7 @@ export default function Home() {
         setPlaylistMusics(musics);
         setModalVisible(true);
       } catch (error) {
-        console.log("Erro ao carregar músicas da playlist:", error);
+        showToast("Erro ao carregar músicas da playlist.", "error");
       }
     }
   };
@@ -88,8 +91,9 @@ export default function Home() {
       <Header />
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: "10%" }}
+        contentContainerStyle={styles.scrollContent}
         style={styles.scroll}
+        showsVerticalScrollIndicator={false}
       >
         <ModalPlaylistDetails
           visible={isModalVisible}
@@ -97,16 +101,23 @@ export default function Home() {
           playlistMusics={playlistMusics}
         />
 
-        <View style={{ gap: 17 }}>
-          <View style={styles.buttonRadio}>
-            <Ionicons name="radio-outline" size={60} color={colors.text} />
-            <TouchableOpacity
-              onPress={() => router.push("/radio")}
-              style={[styles.radioButton, { backgroundColor: colors.primary }]}
-            >
-              <Text style={styles.text}>OUVIR RÁDIO</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.content}>
+          <TouchableOpacity
+            onPress={() => router.push("/radio")}
+            style={[styles.radioCard, { backgroundColor: colors.surface }]}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.radioIconContainer, { backgroundColor: colors.surfaceElevated ?? colors.surface }]}>
+              <Ionicons name="radio-outline" size={48} color={colors.primary} />
+            </View>
+            <Text style={[styles.radioTitle, { color: colors.text }]}>Rádio ao Vivo</Text>
+            <Text style={[styles.radioSubtitle, { color: colors.textSecondary }]}>
+              Ouça estações de rádio em tempo real
+            </Text>
+            <View style={[styles.radioButton, { backgroundColor: colors.primary }]}>
+              <Text style={styles.radioButtonText}>OUVIR RÁDIO</Text>
+            </View>
+          </TouchableOpacity>
 
           {recentPlays?.length === 0 ? (
             <View style={styles.recents}>
@@ -221,25 +232,47 @@ const styles = StyleSheet.create({
   },
   scroll: {
     width: "100%",
-    padding: "5%",
+    paddingHorizontal: spacing.md,
     flexDirection: "column",
   },
+  scrollContent: {
+    paddingBottom: 120,
+  },
+  content: {
+    gap: spacing.lg,
+  },
+  radioCard: {
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    alignItems: "center",
+    marginBottom: spacing.lg,
+  },
+  radioIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
+  },
+  radioTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  radioSubtitle: {
+    fontSize: 14,
+    marginBottom: spacing.md,
+  },
   radioButton: {
-    borderRadius: 30,
-    padding: 2,
-    width: 183,
+    borderRadius: borderRadius.full,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
   },
-  text: {
-    fontSize: 24,
-    textAlign: "center",
-  },
-  header: {
-    width: "90%",
-    marginTop: 15,
-    padding: 2,
-    marginBottom: "10%",
-    justifyContent: "space-between",
-    flexDirection: "row",
+  radioButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFF",
   },
   recents: {
     width: "100%",
@@ -247,39 +280,27 @@ const styles = StyleSheet.create({
   recentesTitle: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 30,
+    marginBottom: spacing.lg,
   },
   recentsTitleText: {
-    fontSize: 24,
-  },
-  buttonRadio: {
-    marginBottom: "20%",
-    alignItems: "center",
-    gap: 10,
+    fontSize: 22,
+    fontWeight: "700",
   },
   listMusicCarrosel: {
-    height: 230,
-    paddingBottom: 20,
+    height: 240,
+    paddingBottom: spacing.md,
     alignItems: "baseline",
-    alignContent: "flex-start",
-    gap: 10,
   },
   favorite: {
-    marginTop: 15,
-    marginBottom: 28,
+    marginTop: spacing.lg,
+    marginBottom: spacing.xl,
     width: "100%",
-    flex: 1,
-    justifyContent: "space-between",
-  },
-  favoritesList: {
-    flexDirection: "column",
   },
   albuns: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     width: "100%",
-    paddingHorizontal: 10,
-    marginLeft: 0,
+    paddingHorizontal: spacing.sm,
   },
 });
