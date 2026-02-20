@@ -3,6 +3,7 @@ import { Audio } from "expo-av";
 import type { Sound } from "expo-av/build/Audio";
 import { useDatabase } from "@/database/useDatabase";
 import axios from "axios";
+import { AUDIUS_ENDPOINTS } from "@/constants/api";
 
 export type Track = {
   id: string;
@@ -162,7 +163,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { playTrack } = get();
     try {
       const response = await axios.get(
-        `https://api.audius.co/v1/tracks/${trackId}/stream`,
+        AUDIUS_ENDPOINTS.TRACK_STREAM(trackId),
         {
           maxRedirects: 0,
           validateStatus: (status) => status >= 200 && status < 400,
@@ -179,12 +180,20 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         };
         await playTrack(track);
       }
-    } catch (error: any) {
-      if (error.response?.status === 302) {
-        await playTrack(error.response.headers.location);
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { status?: number; headers?: { location?: string } } };
+      if (axiosError.response?.status === 302 && axiosError.response?.headers?.location) {
+        const track: Track = {
+          id: trackId,
+          uri: axiosError.response.headers.location,
+          name: trackName,
+          artist,
+          image: trackImage,
+        };
+        await playTrack(track);
         return;
       }
-      console.log("Error fetching track stream:", error);
+      throw error;
     }
   },
 
