@@ -1,39 +1,51 @@
-import { usePlaySelectedTrack, useCurrentTrack } from "@/store/playerSelectors";
+import { usePlaySelectedTrackWithFeedback } from "@/hooks/usePlaySelectedTrackWithFeedback";
+import { useCurrentTrack } from "@/store/playerSelectors";
 import { Image, Text, FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
 import SkeletonLoader from "@/components/SkeletonLoader";
+import { useToast } from "@/context/ToastContext";
+import {
+  fetchTrendingTracks,
+  fetchTrendingPlaylists,
+  fetchTrendingArtists,
+  getErrorMessage,
+} from "@/services/audiusApi";
+import type { AudiusTrack, AudiusPlaylist, AudiusUser } from "@/types/audius";
+import { borderRadius } from "@/theme";
 
 type TrendingSongsProps = {
   type: "trending" | "monthly" | "yearly" | "allTime" | "playlists" | "artists";
   setMusicLoading: (musicIsLoading: boolean) => void;
-  colors: any;
-}
-
- const urlMap: Record<string, string> = {
-   trending: "https://discoveryprovider.audius.co/v1/tracks/trending",
-   monthly: "https://discoveryprovider.audius.co/v1/tracks/trending?time=month",
-   yearly: "https://discoveryprovider.audius.co/v1/tracks/trending?time=year",
-   allTime: "https://discoveryprovider.audius.co/v1/tracks/trending?time=allTime",
-   playlists: "https://discoveryprovider.audius.co/v1/playlists/trending",
-   artists: "https://discoveryprovider.audius.co/v1/users/search?sort_method?popular",
- };
+  colors: {
+    background: string;
+    text: string;
+    textSecondary: string;
+  };
+};
 
 export default function GetTrendingSongs({ type, colors, setMusicLoading }: TrendingSongsProps) {
-  const [requestedResource, setRequestedResource] = useState<any[]>([]);
+  const [requestedResource, setRequestedResource] = useState<
+    (AudiusTrack | AudiusPlaylist | AudiusUser)[]
+  >([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const playSelectedTrack = usePlaySelectedTrack();
+  const playSelectedTrack = usePlaySelectedTrackWithFeedback();
   const currentTrack = useCurrentTrack();
+  const { showToast } = useToast();
 
-  const handlePress = useCallback((item:any) => {
-     setMusicLoading(true);
-     playSelectedTrack(
-       item.id,
-       item.title,
-       item.user.name,
-       item.artwork["480x480"]
-     );
-  }, [requestedResource])
+  const handlePress = useCallback(
+    (item: AudiusTrack | AudiusPlaylist | AudiusUser) => {
+      if ("title" in item && "user" in item) {
+        setMusicLoading(true);
+        playSelectedTrack(
+          item.id,
+          item.title,
+          item.user.name,
+          item.artwork?.["480x480"] ?? item.artwork?.["150x150"] ?? ""
+        );
+      }
+    },
+    [playSelectedTrack, setMusicLoading]
+  );
 
   useEffect(() => {
     if (currentTrack) {
@@ -43,30 +55,35 @@ export default function GetTrendingSongs({ type, colors, setMusicLoading }: Tren
 
   useEffect(() => {
     async function fetchTrending() {
-        const url = urlMap[type];
-        if (!url) return;
       setLoading(true);
       try {
-        const response = await axios.get(url, {
-          headers: { Accept: "application/json" },
-        });
-
-        if (response.data?.data) {
-          setRequestedResource(response.data.data);
+        let data: (AudiusTrack | AudiusPlaylist | AudiusUser)[] = [];
+        if (type === "playlists") {
+          data = await fetchTrendingPlaylists();
+        } else if (type === "artists") {
+          data = await fetchTrendingArtists();
         } else {
-          console.warn("Resposta inesperada:", response.data);
-          setRequestedResource([]);
+          const time =
+            type === "monthly"
+              ? "month"
+              : type === "yearly"
+                ? "year"
+                : type === "allTime"
+                  ? "allTime"
+                  : undefined;
+          data = await fetchTrendingTracks(time);
         }
+        setRequestedResource(data);
       } catch (error) {
-        console.log("Erro ao buscar dados do tipo:", type, error);
+        const message = getErrorMessage(error);
+        showToast(message, "error");
         setRequestedResource([]);
       } finally {
         setLoading(false);
       }
     }
-
     fetchTrending();
-  }, [type]);
+  }, [type, showToast]);
 
   if (loading) {
     return (
@@ -77,6 +94,25 @@ export default function GetTrendingSongs({ type, colors, setMusicLoading }: Tren
       </View>
     );
   }
+  const getImageUri = (item: AudiusTrack | AudiusPlaylist | AudiusUser) => {
+    if ("artwork" in item && item.artwork?.["150x150"]) return item.artwork["150x150"];
+    if ("profile_picture" in item && item.profile_picture?.["480x480"])
+      return item.profile_picture["480x480"];
+    return undefined;
+  };
+
+  const getTitle = (item: AudiusTrack | AudiusPlaylist | AudiusUser) => {
+    if ("playlist_name" in item) return item.playlist_name;
+    if ("name" in item && !("user" in item)) return item.name;
+    if ("title" in item) return item.title;
+    return "";
+  };
+
+  const getSubtitle = (item: AudiusTrack | AudiusPlaylist | AudiusUser) => {
+    if ("user" in item) return item.user.name;
+    return "";
+  };
+
   return (
     <FlatList
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -84,52 +120,63 @@ export default function GetTrendingSongs({ type, colors, setMusicLoading }: Tren
       showsHorizontalScrollIndicator={false}
       data={requestedResource}
       keyExtractor={(item) => item.id.toString()}
+      contentContainerStyle={styles.listContent}
       renderItem={({ item }) => (
         <TouchableOpacity
-          style={styles.item}
+          style={[styles.item, { backgroundColor: colors.surface }]}
           onPress={() => handlePress(item)}
+          activeOpacity={0.8}
         >
           <Image
-            source={{ uri: type !== "artists" ? item.artwork["150x150"] : item.profile_picture["480x480"] }} // possíveis valores aqui são 150x150, 480x480 e 1000x1000, mas ao testar valores maiores que 150x150 o app fica lento. Quanto maior a resolução, mais bonita a imagem fica
+            source={
+              getImageUri(item)
+                ? { uri: getImageUri(item) }
+                : require("@/assets/icons/default-song.png")
+            }
             style={styles.image}
           />
-          <Text style={[styles.title, { color: colors.text }]}>
-            {type === "playlists" ? item.playlist_name : type === "artists" ? item.name : item.title}
+          <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
+            {getTitle(item)}
           </Text>
-          {type !== "artists" && <Text style={[styles.artist, { color: colors.textSecondary }]}>
-            {type !== "playlists" ? item.user.name : ""}
-          </Text>}
+          {getSubtitle(item) ? (
+            <Text style={[styles.artist, { color: colors.textSecondary }]} numberOfLines={1}>
+              {getSubtitle(item)}
+            </Text>
+          ) : null}
         </TouchableOpacity>
       )}
     />
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     alignContent: "center",
     flexGrow: 0,
   },
+  listContent: {
+    paddingHorizontal: 8,
+  },
   title: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "600",
-    maxWidth: 130,
-    textOverflow: "ellipsis",
-    overflow: "hidden",
+    maxWidth: 120,
   },
   item: {
-    padding: 10,
+    padding: 12,
     maxWidth: 130,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
+    marginHorizontal: 6,
+    borderRadius: borderRadius.md,
   },
   artist: {
-    color: "#c1c1c1",
     fontSize: 12,
-    maxWidth: 130,
+    maxWidth: 120,
+    marginTop: 2,
   },
   image: {
-    width: 105,
-    height: 105,
-    borderRadius: 20,
-  }
+    width: 110,
+    height: 110,
+    borderRadius: borderRadius.md,
+    marginBottom: 8,
+  },
 });
