@@ -14,14 +14,18 @@ import defaultSongIcon from "@/assets/icons/default-song.png";
 import { useDatabase } from "@/database/useDatabase";
 
 import { useEffect, memo } from "react";
-import {useTogglePlayPause,
+import {
+  useTogglePlayPause,
   useTogglePreviousSong,
   useToggleNextSong,
   useCurrentTrack,
-  useIsPlaying, usePosition,
+  useIsPlaying,
+  usePosition,
   useDuration,
-  useSeekTo, useSetVolume
+  useSeekTo,
+  useSetVolume,
 } from "@/store/playerSelectors";
+import { formatMilliseconds } from "@/utils/formatTime";
 const Player = memo(function Player() {
   const [volume, setVolumeState] = useState(1);
   const router = useRouter();
@@ -59,12 +63,6 @@ const Player = memo(function Player() {
     }, [currentTrack])
   );
 
-
-  const formatMilliseconds = (milliseconds: number) => {
-    const minutes = Math.floor(milliseconds / 60000);
-    const seconds = Math.floor((milliseconds % 60000) / 1000);
-    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-  };
 
   const handleSeek = async (value: number) => {
     await seekTo(value);

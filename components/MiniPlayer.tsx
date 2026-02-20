@@ -12,6 +12,7 @@ import Slider from "@react-native-community/slider";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, usePathname } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   useCurrentTrack,
   useIsPlaying,
@@ -26,12 +27,7 @@ import {
 import { usePlayerStore } from "@/store/playerStore";
 import { useThemeColors } from "@/hooks/useThemeColor";
 import { useDatabase } from "@/database/useDatabase";
-
-const formatMilliseconds = (milliseconds: number) => {
-  const minutes = Math.floor(milliseconds / 60000);
-  const seconds = Math.floor((milliseconds % 60000) / 1000);
-  return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-};
+import { formatMilliseconds } from "@/utils/formatTime";
 
 type CollapsedMiniPlayerProps = {
   currentTrack: {
@@ -47,10 +43,11 @@ type CollapsedMiniPlayerProps = {
     text: string;
     textSecondary: string;
   };
+  bottom: number;
 };
 
 const CollapsedMiniPlayer = React.memo(
-  ({ currentTrack, isPlaying, togglePlayPause, handleToggle, colors }: CollapsedMiniPlayerProps) => {
+  ({ currentTrack, isPlaying, togglePlayPause, handleToggle, colors, bottom }: CollapsedMiniPlayerProps) => {
     const imageSource = useMemo(
       () =>
         currentTrack.image
@@ -61,7 +58,7 @@ const CollapsedMiniPlayer = React.memo(
 
     return (
       <TouchableOpacity
-        style={[styles.container, { backgroundColor: colors.surface }]}
+        style={[styles.container, { backgroundColor: colors.surface, bottom }]}
         onPress={handleToggle}
       >
         <View style={styles.miniImageWrapper}>
@@ -306,6 +303,12 @@ const MiniPlayer = () => {
   const database = useDatabase();
   const router = useRouter();
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
+
+  const miniPlayerBottom = useMemo(() => {
+    const navMenuHeight = 60;
+    return navMenuHeight + Math.max(insets.bottom, Platform.OS === "ios" ? 0 : 0);
+  }, [insets.bottom]);
 
   const handleToggle = useCallback(() => setIsExpanded((prev) => !prev), []);
   const handleSeek = useCallback((value: number) => seekTo(value), [seekTo]);
@@ -402,6 +405,7 @@ const MiniPlayer = () => {
       togglePlayPause={togglePlayPause}
       handleToggle={handleToggle}
       colors={colors}
+      bottom={miniPlayerBottom}
     />
   );
 };
@@ -412,7 +416,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     position: "absolute",
-    bottom: 60,
     width: "100%",
     zIndex: 10,
   },
