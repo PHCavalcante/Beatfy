@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "music-player-project",
-    "slug": "music-player-project",
+    "name": "Beatfy",
+    "slug": "beatfy",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,7 +15,12 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "navigationBar": {
+        "backgroundColor": "#0A0A0C",
+        "barStyle": "light-content"
+      },
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "bundler": "metro",
