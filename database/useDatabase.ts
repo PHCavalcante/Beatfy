@@ -55,10 +55,10 @@ export async function useDatabase() {
   async function existsDataOnRecentPlays(id_music: string) {
     try {
       const response = await database.getFirstAsync(
-        `SELECT * FROM recent_plays WHERE id_music = ${id_music}`
+        "SELECT * FROM recent_plays WHERE id_music = $id_music",
+        { $id_music: id_music }
       );
-      if (await response) return true;
-      return false;
+      return !!response;
     } catch (error) {
       throw error;
     }
@@ -106,12 +106,14 @@ export async function useDatabase() {
       const quantityPlays = await database.getFirstAsync<{
         quantity_plays: number;
       }>(
-        `SELECT quantity_plays FROM recent_plays WHERE id_music = ${id_music}`
+        "SELECT quantity_plays FROM recent_plays WHERE id_music = $id_music",
+        { $id_music: id_music }
       );
       if (quantityPlays) {
-        const increment: number = quantityPlays.quantity_plays + 1;
+        const increment = quantityPlays.quantity_plays + 1;
         await database.runAsync(
-          `UPDATE recent_plays SET quantity_plays = ${increment} WHERE id_music = ${id_music}`
+          "UPDATE recent_plays SET quantity_plays = $increment WHERE id_music = $id_music",
+          { $increment: increment, $id_music: id_music }
         );
       }
     } catch (error) {
