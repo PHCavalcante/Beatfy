@@ -46,8 +46,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   repeatMode: "off",
 
   playTrack: async (track, newPlaylist) => {
-    const db = await useDatabase();
-
     if (soundRef) {
       await soundRef.unloadAsync();
     }
@@ -64,33 +62,37 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
           position: status.positionMillis || 0,
         });
         if (status.didJustFinish) {
-      const { repeatMode, currentTrack, playlist, playTrack, toggleNextSong } = get();
-
-      if (repeatMode === "one") {
-        playTrack(currentTrack!, playlist);
-      } else {
-        toggleNextSong();
+          const { repeatMode, currentTrack, playlist, playTrack, toggleNextSong } = get();
+          if (repeatMode === "one") {
+            playTrack(currentTrack!, playlist);
+          } else {
+            toggleNextSong();
+          }
         }
       }
-    }
-   });
+    });
 
     soundRef = sound;
     set({ currentTrack: track, isPlaying: true, playlist: newPlaylist });
-
-    if (track.id) {
-      const exists = await db.existsDataOnRecentPlays(track.id);
-      if (exists) {
-        await db.incrementQuantityPlays(track.id);
-      } else {
-        await db.insertInRecentPlaysTable(track.id);
-      }
-    }
 
     if (newPlaylist) {
       const index = newPlaylist.findIndex((t) => t.uri === track.uri);
       if (index !== -1) {
         set({ playlist: newPlaylist, currentIndex: index });
+      }
+    }
+
+    if (track.id) {
+      try {
+        const db = await useDatabase();
+        const exists = await db.existsDataOnRecentPlays(track.id);
+        if (exists) {
+          await db.incrementQuantityPlays(track.id);
+        } else {
+          await db.insertInRecentPlaysTable(track.id);
+        }
+      } catch (err) {
+        console.warn("Erro ao registrar recent play:", err);
       }
     }
   },

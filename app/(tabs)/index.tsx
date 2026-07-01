@@ -4,7 +4,6 @@ import { useMusics } from "@/Context/musicContext";
 import { useThemeColors } from "@/hooks/useThemeColor";
 import * as MediaLibrary from "expo-media-library";
 import Header from "@/components/Header";
-import { initializeDatabase } from "@/database/initializeDatabase";
 import { useDatabase, type MusicInfo } from "@/database/useDatabase";
 import { LocalMusicIcon } from "@/components/Music";
 import { Track } from "@/store/playerStore";
@@ -54,7 +53,6 @@ export default function Index() {
   };
 
   useEffect(() => {
-    initializeDatabase();
     getMusics();
   }, []);
 
