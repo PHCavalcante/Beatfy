@@ -1,9 +1,8 @@
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
 import { useThemeColors } from "@/hooks/useThemeColor";
-import { Link } from "expo-router";
+import { Link, usePathname } from "expo-router";
 import type { LinkProps } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { usePathname } from "expo-router";
 
 const NavMenuItem = ({ icon, text, route }: { icon: keyof typeof Ionicons.glyphMap; text: string; route: LinkProps["href"] }) => {
   const colors = useThemeColors();

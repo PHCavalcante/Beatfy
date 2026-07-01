@@ -47,7 +47,7 @@ type CollapsedMiniPlayerProps = {
 };
 
 const CollapsedMiniPlayer = React.memo(
-  ({ currentTrack, isPlaying, togglePlayPause, handleToggle, colors, bottom }: CollapsedMiniPlayerProps) => {
+  function CollapsedMiniPlayer({ currentTrack, isPlaying, togglePlayPause, handleToggle, colors, bottom }: CollapsedMiniPlayerProps) {
     const imageSource = useMemo(
       () =>
         currentTrack.image
@@ -123,7 +123,7 @@ type ExpandedPlayerProps = {
 };
 
 const ExpandedPlayer = React.memo(
-  ({
+  function ExpandedPlayer({
     currentTrack,
     isPlaying,
     position,
@@ -143,7 +143,7 @@ const ExpandedPlayer = React.memo(
     nextRepeatMode,
     router,
     handleToggle,
-  }: ExpandedPlayerProps) => {
+  }: ExpandedPlayerProps) {
     const formattedPosition = useMemo(
       () => formatMilliseconds(position),
       [position]

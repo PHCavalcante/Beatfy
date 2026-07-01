@@ -5,7 +5,7 @@ import {
   Image,
   TouchableOpacity,
 } from "react-native";
-import { useCallback, useState } from "react";
+import { useCallback, useState, memo } from "react";
 import Slider from "@react-native-community/slider";
 import { useThemeColors } from "@/hooks/useThemeColor";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -13,7 +13,6 @@ import { Ionicons } from "@expo/vector-icons";
 import defaultSongIcon from "@/assets/icons/default-song.png";
 import { useDatabase } from "@/database/useDatabase";
 
-import { useEffect, memo } from "react";
 import {
   useTogglePlayPause,
   useTogglePreviousSong,
@@ -85,8 +84,7 @@ const Player = memo(function Player() {
         setIsFavorite(true);
       }
       const db = await database;
-      const updatedFavorites = await db.queryFavoriteMusics();
-      //console.log("Músicas favoritas atualizadas:", updatedFavorites);
+      await db.queryFavoriteMusics();
 
     } catch (err) {
       console.error("Erro ao alternar favorito:", err);

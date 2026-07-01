@@ -35,7 +35,7 @@ export default function Home() {
       if (suggestion !== null && suggestion.length > 0) return;
       const songs = (await database).queryRandomAllMusics();
       setSuggestion(await songs);
-    } catch (error) {
+    } catch {
       showToast("Erro ao carregar recomendações.", "error");
     }
   };
@@ -46,7 +46,7 @@ export default function Home() {
         suggestionSongs();
       }
       setRecentPlays(await songs);
-    } catch (error) {
+    } catch {
       showToast("Erro ao carregar músicas recentes.", "error");
     }
   };
@@ -59,7 +59,7 @@ export default function Home() {
       const db = await database;
       const allPlaylists = await db.queryAllPlaylists();
       setPlaylists(allPlaylists);
-    } catch (error) {
+    } catch {
       showToast("Erro ao carregar playlists.", "error");
     }
   };
@@ -75,7 +75,7 @@ export default function Home() {
         setSelectedPlaylistId(playlistId);
         setPlaylistMusics(musics);
         setModalVisible(true);
-      } catch (error) {
+      } catch {
         showToast("Erro ao carregar músicas da playlist.", "error");
       }
     }

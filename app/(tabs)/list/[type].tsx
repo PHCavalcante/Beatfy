@@ -38,20 +38,12 @@ export default function PageList() {
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    if (typeof type !== "string" || !validTypes.includes(type as TypeKey)) {
-        return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-                <Text style={{ color: colors.text, textAlign: "center", marginTop: 20 }}>
-                    Tipo inválido ou não encontrado.
-                </Text>
-            </SafeAreaView>
-        );
-    }
-
-    const typedType = type as TypeKey;
+    const isValidType = typeof type === "string" && validTypes.includes(type as TypeKey);
+    const typedType = isValidType ? (type as TypeKey) : "recent";
     const title = titlesPages[typedType];
 
     useEffect(() => {
+        if (!isValidType) return;
         const fetchData = async () => {            
             try {
                 const database = await db;
@@ -94,8 +86,17 @@ export default function PageList() {
         };
 
         fetchData();
-    }, [items]);
+    }, [isValidType, typedType, db]);
 
+    if (!isValidType) {
+        return (
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+                <Text style={{ color: colors.text, textAlign: "center", marginTop: 20 }}>
+                    Tipo inválido ou não encontrado.
+                </Text>
+            </SafeAreaView>
+        );
+    }
 
     return (
 

@@ -19,9 +19,9 @@ type Props = {
 export default function Music({ name, url, artist, mode = "horizontal", path, id, onPress, colors }: Props) {
     if (mode === "horizontal") {
         return <HorizontalMusicIcon name={name} url={url} />
-    } else if (mode == "vertical") {
+    } else if (mode === "vertical") {
         return <VerticalMusicIcon name={name} artist={artist} url={url} />
-    } else if (mode == "grid") {
+    } else if (mode === "grid") {
         return <GridMusicIcon name={name} artist={artist} url={url} path={path} id={id} colors={colors} onPress={onPress}/>
     } else {
         return <LocalMusicIcon infoItem={{ id: id ?? "", uri: path ?? "", name: name ?? "Unknown", artist }} playlist={[]} colors={colors} />
